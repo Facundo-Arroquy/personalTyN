@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import type { GymSession, GymExercise, FoodLog } from '@/lib/supabase'
+import type { GymSession, GymExercise, FoodLog, SetLog } from '@/lib/supabase'
 import { ArrowLeft, Dumbbell, Utensils, ChevronDown, ChevronUp } from 'lucide-react'
 import Link from 'next/link'
 
@@ -62,7 +62,7 @@ function SessionCard({ session }: { session: GymSession & { exercises?: GymExerc
             <div key={ex.id} style={{ marginBottom: '0.75rem' }}>
               <p style={{ fontWeight: 600, marginBottom: '0.3rem', color: 'var(--accent)', fontSize: '0.9rem' }}>{ex.name}</p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(90px,1fr))', gap: '0.3rem' }}>
-                {(ex.sets as any[]).map((s: any, i: number) => (
+                {(ex.sets as SetLog[]).map((s: SetLog, i: number) => (
                   <div key={i} style={{
                     background: 'var(--surface2)',
                     borderRadius: 6,
@@ -101,10 +101,6 @@ function HistorialContent() {
   const [foodLogs, setFoodLogs] = useState<FoodLog[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchAll()
-  }, [])
-
   async function fetchAll() {
     const [{ data: sess }, { data: food }] = await Promise.all([
       supabase.from('gym_sessions').select('*').order('date', { ascending: false }).limit(30),
@@ -114,6 +110,9 @@ function HistorialContent() {
     if (food) setFoodLogs(food)
     setLoading(false)
   }
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { fetchAll() }, [])
 
   const groupedFood = groupFoodByDate(foodLogs)
 

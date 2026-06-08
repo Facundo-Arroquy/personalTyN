@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { Plan, PlanExercise } from '@/lib/supabase'
+import type { Plan, PlanExercise, MealPlan } from '@/lib/supabase'
 import { ArrowLeft, Calendar, Utensils, Dumbbell } from 'lucide-react'
 import Link from 'next/link'
 
@@ -20,8 +20,6 @@ export default function PlanActual() {
   const [loading, setLoading] = useState(true)
   const [activeDay, setActiveDay] = useState(DAYS[0])
 
-  useEffect(() => { fetchPlan() }, [])
-
   async function fetchPlan() {
     const today = new Date().toISOString().split('T')[0]
     const { data } = await supabase
@@ -34,6 +32,9 @@ export default function PlanActual() {
     if (data && data.length > 0) setPlan(data[0])
     setLoading(false)
   }
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { fetchPlan() }, [])
 
   const dayExercises = plan
     ? (plan.routine as PlanExercise[]).filter(e => e.day === activeDay)
@@ -134,8 +135,8 @@ export default function PlanActual() {
 
             <div style={{ display: 'grid', gap: '0.6rem' }}>
               {MEAL_LABELS.map(m => {
-                const meals = plan.meals_plan as any
-                const content = meals?.[m.key]
+                const meals = plan.meals_plan as MealPlan
+                const content = meals?.[m.key as keyof MealPlan]
                 if (!content) return null
                 return (
                   <div key={m.key} className="card" style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>

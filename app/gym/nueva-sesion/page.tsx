@@ -41,28 +41,6 @@ export default function NuevaSesion() {
   const [timeIn] = useState(now.toTimeString().slice(0, 5))
   const [feeling, setFeeling] = useState<Feeling>('bien')
 
-  useEffect(() => { fetchCurrentPlan() }, [])
-
-  async function fetchCurrentPlan() {
-    const today = new Date().toISOString().split('T')[0]
-    const { data } = await supabase
-      .from('plans')
-      .select('*')
-      .lte('start_date', today)
-      .gte('end_date', today)
-      .order('created_at', { ascending: false })
-      .limit(1)
-
-    const activePlan = data?.[0] ?? null
-    setPlan(activePlan)
-
-    if (activePlan) {
-      const suggested = await detectNextDay(activePlan.routine as PlanExercise[])
-      setSuggestedDay(suggested)
-    }
-    setLoading(false)
-  }
-
   async function detectNextDay(planExercises: PlanExercise[]): Promise<string | null> {
     const { data: sessions } = await supabase
       .from('gym_sessions')
@@ -98,6 +76,29 @@ export default function NuevaSesion() {
     const dayKeys = DAY_CONFIG.map(d => d.key)
     return dayKeys[(dayKeys.indexOf(bestDay) + 1) % dayKeys.length]
   }
+
+  async function fetchCurrentPlan() {
+    const today = new Date().toISOString().split('T')[0]
+    const { data } = await supabase
+      .from('plans')
+      .select('*')
+      .lte('start_date', today)
+      .gte('end_date', today)
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    const activePlan = data?.[0] ?? null
+    setPlan(activePlan)
+
+    if (activePlan) {
+      const suggested = await detectNextDay(activePlan.routine as PlanExercise[])
+      setSuggestedDay(suggested)
+    }
+    setLoading(false)
+  }
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { fetchCurrentPlan() }, [])
 
   function pickDay(dayKey: string) {
     if (!plan) return

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { PlanExercise, MealPlan } from '@/lib/supabase'
+import type { Plan, PlanExercise, MealPlan } from '@/lib/supabase'
 import { ArrowLeft, Plus, Trash2, Save, ChevronDown, ChevronUp } from 'lucide-react'
 import Link from 'next/link'
 
@@ -47,32 +47,34 @@ const INITIAL_MEALS: MealPlan = {
 export default function TrainerPanel() {
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
-  const [plans, setPlans] = useState<any[]>([])
+  const [plans, setPlans] = useState<Plan[]>([])
   const [loadingPlans, setLoadingPlans] = useState(true)
 
-  const today = new Date().toISOString().split('T')[0]
-  const in15 = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-
-  const [startDate, setStartDate] = useState(today)
-  const [endDate, setEndDate] = useState(in15)
+  const [startDate, setStartDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [endDate, setEndDate] = useState(() => {
+    const d = new Date()
+    d.setDate(d.getDate() + 15)
+    return d.toISOString().split('T')[0]
+  })
   const [routine, setRoutine] = useState<PlanExercise[]>(INITIAL_ROUTINE)
   const [meals, setMeals] = useState<MealPlan>(INITIAL_MEALS)
   const [dietNotes, setDietNotes] = useState('Celiaco: todos los alimentos deben ser sin TACC. Sin suplementos ni AINEs. Meta: ~3200-3300 kcal, ~170g proteína.')
   const [activeDay, setActiveDay] = useState(DAYS[0])
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null)
 
-  useEffect(() => { fetchPlans() }, [])
-
   async function fetchPlans() {
     const { data } = await supabase.from('plans').select('*').order('created_at', { ascending: false }).limit(10)
-    if (data) setPlans(data)
+    if (data) setPlans(data as Plan[])
     setLoadingPlans(false)
   }
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { fetchPlans() }, [])
+
   const dayRoutine = routine.filter(e => e.day === activeDay)
 
-  function updateExercise(idx: number, field: keyof PlanExercise, value: any) {
-    const globalIdx = routine.findIndex((e, i) => {
+  function updateExercise(idx: number, field: keyof PlanExercise, value: string | number) {
+    const globalIdx = routine.findIndex((e) => {
       const dayOnes = routine.filter(r => r.day === activeDay)
       return e === dayOnes[idx]
     })
